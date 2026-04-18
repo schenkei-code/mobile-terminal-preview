@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<meta name="theme-color" content="#000000" />
+<title>Mobile Terminal — Visual Prototype</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          nexa: {
+            50:  "#f5f3ff",
+            100: "#ede9fe",
+            200: "#ddd6fe",
+            300: "#c4b5fd",
+            400: "#a78bfa",
+            500: "#8b5cf6",
+            600: "#7c3aed",
+            700: "#6d28d9",
+          },
+          tn: {
+            bg:    "#191b29",
+            fg:    "#c7cfee",
+            blue:  "#7da1ff",
+            green: "#9ece6a",
+            red:   "#f7768e",
+            yellow:"#e0af68",
+            purple:"#bb9af7",
+            cyan:  "#7bd2e4",
+            comment: "#565f89",
+          },
+          sol: {
+            bg:    "#002b36",
+            fg:    "#839496",
+            blue:  "#268bd2",
+            green: "#859900",
+            red:   "#dc322f",
+            yellow:"#b58900",
+            magenta:"#d33682",
+            cyan:  "#2aa198",
+          }
+        },
+        fontFamily: {
+          mono: ["ui-monospace","SFMono-Regular","JetBrains Mono","Menlo","monospace"],
+          sf:   ["-apple-system","BlinkMacSystemFont","SF Pro Text","SF Pro Display","Segoe UI","system-ui","sans-serif"],
+        },
+        boxShadow: {
+          glass: "0 1px 0 0 rgba(255,255,255,0.06) inset, 0 0 0 1px rgba(255,255,255,0.08), 0 20px 60px -20px rgba(0,0,0,0.8)",
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html, body { background: #0a0a0b; color: white; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+  /* Page backdrop — dark, with a subtle violet halo behind the phone */
+  body {
+    background:
+      radial-gradient(60% 50% at 50% 30%, rgba(167,139,250,0.12), rgba(0,0,0,0) 60%),
+      radial-gradient(40% 30% at 20% 80%, rgba(56,189,248,0.08), rgba(0,0,0,0) 60%),
+      #06070a;
+    min-height: 100vh;
+  }
+
+  /* iPhone chrome */
+  .iphone-frame {
+    width: 393px;
+    height: 852px;
+    border-radius: 56px;
+    padding: 10px;
+    background: linear-gradient(180deg, #17181c 0%, #0c0d10 100%);
+    box-shadow:
+      0 40px 80px -20px rgba(0,0,0,0.8),
+      0 0 0 1px rgba(255,255,255,0.06),
+      inset 0 0 0 2px rgba(255,255,255,0.04);
+    position: relative;
+  }
+  .iphone-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 48px;
+    overflow: hidden;
+    position: relative;
+    background: #000;
+  }
+  .dynamic-island {
+    position: absolute;
+    top: 11px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 126px;
+    height: 37px;
+    background: #000;
+    border-radius: 999px;
+    z-index: 50;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  /* Liquid Glass layers */
+  .glass {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+  }
+  .glass-strong {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.10);
+    backdrop-filter: blur(32px) saturate(180%);
+    -webkit-backdrop-filter: blur(32px) saturate(180%);
+  }
+  .glass-tabbar {
+    background: rgba(20,20,24,0.55);
+    border: 1px solid rgba(255,255,255,0.09);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.08) inset,
+      0 -1px 0 0 rgba(0,0,0,0.3) inset,
+      0 20px 50px -10px rgba(0,0,0,0.7);
+  }
+
+  /* Scroll areas shouldn't show weird scrollbars */
+  .nsb::-webkit-scrollbar { display: none; }
+  .nsb { scrollbar-width: none; }
+
+  /* Caret blink */
+  @keyframes caret { 0%,49% { opacity: 1 } 50%,100% { opacity: 0 } }
+  .caret { animation: caret 1s steps(1,end) infinite; }
+
+  /* Fade-in on tab switch */
+  .tab-enter { animation: fade 220ms ease-out both; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Tokyo Night swatches */
+  .tn-bg { background: #191b29; }
+  .sol-bg { background: #002b36; }
+
+  /* Terminal lines */
+  .term-line { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+
+  /* Thinking bubble pulse */
+  @keyframes pulse-dot { 0%,100%{opacity:0.35} 50%{opacity:1} }
+  .pulse-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
+  .pulse-dot:nth-child(2){ animation-delay: .2s }
+  .pulse-dot:nth-child(3){ animation-delay: .4s }
+
+  /* On tiny viewports (real iPhone in Safari), stretch to full screen */
+  @media (max-width: 430px) {
+    body { padding: 0 !important; background: #000; }
+    .page-pad { padding: 0 !important; }
+    .iphone-frame {
+      width: 100vw;
+      height: 100dvh;
+      border-radius: 0;
+      padding: 0;
+      background: #000;
+      box-shadow: none;
+    }
+    .iphone-inner { border-radius: 0; }
+    .helper { display: none !important; }
+  }
+</style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start py-10 page-pad">
+
+  <!-- Helper header (hidden on real phones) -->
+  <div class="helper max-w-[393px] w-full text-center mb-6 px-4">
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs text-white/70">
+      <span class="w-1.5 h-1.5 rounded-full bg-nexa-400"></span>
+      Mobile Terminal — visueller Prototyp
+    </div>
+    <h1 class="mt-3 text-2xl font-semibold tracking-tight">iOS 26 Liquid Glass Preview</h1>
+    <p class="mt-1 text-sm text-white/50">Tab-Wechsel funktioniert. Alles andere ist statisch.</p>
+  </div>
+
+  <!-- iPhone 14 Pro frame -->
+  <div class="iphone-frame">
+    <div class="iphone-inner" id="screen">
+
+      <!-- Dynamic Island -->
+      <div class="dynamic-island"></div>
+
+      <!-- Status bar -->
+      <div class="absolute top-0 left-0 right-0 h-[54px] z-40 flex items-end px-8 pb-2 select-none">
+        <div class="flex-1 text-[15px] font-semibold tracking-tight">21:46</div>
+        <div class="flex items-center gap-1.5 text-white">
+          <!-- signal -->
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4.5" y="5" width="3" height="6" rx="0.5"/><rect x="9" y="2.5" width="3" height="8.5" rx="0.5"/><rect x="13.5" y="0" width="3" height="11" rx="0.5"/></svg>
+          <!-- 5G -->
+          <span class="text-[11px] font-semibold tracking-tight">5G</span>
+          <!-- battery -->
+          <div class="relative w-[25px] h-[12px] rounded-[3px] border border-white/90 ml-1 flex items-center">
+            <div class="h-[8px] w-[18px] rounded-[1.5px] bg-white ml-[1.5px]"></div>
+            <div class="absolute -right-[2px] top-1/2 -translate-y-1/2 w-[1.5px] h-[4px] rounded-sm bg-white/90"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SESSIONS TAB ================= -->
+      <section data-tab="sessions" class="absolute inset-0 flex flex-col tab-enter">
+
+        <!-- Nav header -->
+        <div class="pt-[54px] px-5 pb-2 flex items-center justify-between">
+          <h2 class="text-[28px] font-bold tracking-tight">Sessions</h2>
+          <button class="w-9 h-9 rounded-full flex items-center justify-center glass text-nexa-400 active:scale-95 transition">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+
+        <!-- Session tab strip -->
+        <div class="px-3 pb-2 overflow-x-auto nsb">
+          <div class="flex gap-2 min-w-max">
+            <div class="flex items-center gap-2 pl-2 pr-2.5 py-1.5 rounded-full bg-nexa-500/20 border border-nexa-400/30">
+              <span class="text-[10px] font-mono font-semibold tracking-wider text-green-400 bg-green-400/15 border border-green-400/30 px-1.5 py-0.5 rounded-full">CONN</span>
+              <span class="text-[13px] font-medium">nexa-prod</span>
+              <button class="w-4 h-4 rounded-full flex items-center justify-center text-white/40 hover:text-white/70">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+              </button>
+            </div>
+            <div class="flex items-center gap-2 pl-2 pr-2.5 py-1.5 rounded-full glass">
+              <span class="text-[10px] font-mono font-semibold tracking-wider text-yellow-400 bg-yellow-400/15 border border-yellow-400/30 px-1.5 py-0.5 rounded-full">AUTH</span>
+              <span class="text-[13px] font-medium text-white/80">local dev</span>
+              <button class="w-4 h-4 rounded-full flex items-center justify-center text-white/40 hover:text-white/70">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+              </button>
+            </div>
+            <button class="flex items-center gap-1 px-2.5 py-1.5 rounded-full glass text-white/60 text-[13px]">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Neu
+            </button>
+          </div>
+        </div>
+
+        <!-- Terminal -->
+        <div class="flex-1 relative overflow-hidden mx-3 rounded-2xl" style="background:#191b29;">
+          <!-- subtle glass overlay on top -->
+          <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(100% 60% at 50% 0%, rgba(167,139,250,0.06), rgba(0,0,0,0) 60%);"></div>
+
+          <div class="absolute inset-0 overflow-y-auto nsb p-3">
+            <div class="term-line text-tn-comment">Last login: Sat Apr 18 21:44:12 on ttys003</div>
+            <div class="term-line"><span class="text-tn-purple">domin@nexa-prod</span><span class="text-tn-comment">:</span><span class="text-tn-blue">~/repos/nexalytics</span><span class="text-tn-comment">$</span> <span class="text-tn-fg">claude --output-format stream-json</span></div>
+            <div class="term-line text-tn-comment">{"type":"system","subtype":"init","session_id":"4f3a...","model":"claude-opus-4-7[1m]"}</div>
+            <div class="h-2"></div>
+
+            <!-- Thinking bubble -->
+            <div class="rounded-xl px-3 py-2 mb-2 border border-nexa-400/20" style="background: rgba(167,139,250,0.08); backdrop-filter: blur(12px);">
+              <div class="flex items-center gap-2 mb-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="text-nexa-400"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
+                <span class="text-[10px] font-mono tracking-wider text-nexa-300 uppercase">Thinking</span>
+              </div>
+              <div class="text-[11.5px] text-white/75 leading-relaxed">Checking the build script in package.json before running it…</div>
+              <div class="mt-1 flex gap-1">
+                <span class="pulse-dot w-1 h-1 rounded-full bg-nexa-400"></span>
+                <span class="pulse-dot w-1 h-1 rounded-full bg-nexa-400"></span>
+                <span class="pulse-dot w-1 h-1 rounded-full bg-nexa-400"></span>
+              </div>
+            </div>
+
+            <!-- Tool use: Bash -->
+            <div class="rounded-xl px-3 py-2 mb-2 border border-white/10" style="background: rgba(125,161,255,0.08);">
+              <div class="flex items-center gap-2 mb-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-tn-blue"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                <span class="text-[10px] font-mono tracking-wider text-tn-blue uppercase">Tool · Bash</span>
+                <span class="ml-auto text-[10px] text-white/40 font-mono">1.2s</span>
+              </div>
+              <div class="term-line text-tn-fg">$ npm run build</div>
+              <div class="term-line text-tn-comment">  description: "Build the Next.js app for production"</div>
+            </div>
+
+            <!-- Tool result -->
+            <div class="rounded-xl px-3 py-2 mb-2 border border-white/10" style="background: rgba(158,206,106,0.06);">
+              <div class="flex items-center gap-2 mb-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-tn-green"><polyline points="20 6 9 17 4 12"/></svg>
+                <span class="text-[10px] font-mono tracking-wider text-tn-green uppercase">Result</span>
+              </div>
+              <div class="term-line text-tn-fg">▲ Next.js 15.1.2</div>
+              <div class="term-line text-tn-comment">- Creating an optimized production build ...</div>
+              <div class="term-line text-tn-green">✓ Compiled successfully in 18.4s</div>
+              <div class="term-line text-tn-comment">Route (app)                     Size   First Load JS</div>
+              <div class="term-line text-tn-fg">┌ ○ /                           4.2 kB     112 kB</div>
+              <div class="term-line text-tn-fg">├ ○ /dashboard                  8.9 kB     128 kB</div>
+              <div class="term-line text-tn-fg">└ ○ /creators/[slug]           12.4 kB     134 kB</div>
+            </div>
+
+            <!-- Tool use: Edit with diff -->
+            <div class="rounded-xl px-3 py-2 mb-2 border border-white/10" style="background: rgba(224,175,104,0.06);">
+              <div class="flex items-center gap-2 mb-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-tn-yellow"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>
+                <span class="text-[10px] font-mono tracking-wider text-tn-yellow uppercase">Tool · Edit</span>
+                <span class="ml-auto text-[10px] text-white/40 font-mono">README.md</span>
+              </div>
+              <div class="rounded-md overflow-hidden mt-1" style="background: #0f1120;">
+                <div class="term-line px-2 py-0.5 text-tn-red bg-red-500/10">- # NexaLytics</div>
+                <div class="term-line px-2 py-0.5 text-tn-green bg-green-500/10">+ # NexaLytics — Creator Economy Platform</div>
+                <div class="term-line px-2 py-0.5 text-tn-comment"> </div>
+                <div class="term-line px-2 py-0.5 text-tn-green bg-green-500/10">+ AI-powered analytics for creators.</div>
+              </div>
+            </div>
+
+            <!-- Assistant text -->
+            <div class="term-line text-tn-fg">Done. Der Build läuft sauber durch (18.4s, 3 Routes), und ich hab das README um einen einleitenden Satz ergänzt.</div>
+            <div class="h-1"></div>
+            <div class="term-line text-tn-comment">{"type":"result","duration_ms":4412,"num_turns":1,"total_cost_usd":0.0217}</div>
+            <div class="h-2"></div>
+
+            <div class="term-line"><span class="text-tn-purple">domin@nexa-prod</span><span class="text-tn-comment">:</span><span class="text-tn-blue">~/repos/nexalytics</span><span class="text-tn-comment">$</span> <span class="caret inline-block w-[7px] h-[14px] bg-tn-fg align-middle"></span></div>
+          </div>
+        </div>
+
+        <!-- Keyboard accessory + input -->
+        <div class="mx-3 mt-2 mb-2">
+          <!-- accessory strip -->
+          <div class="glass rounded-xl overflow-x-auto nsb">
+            <div class="flex gap-1.5 p-2 min-w-max">
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">esc</kbd>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">tab</kbd>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-nexa-500 border border-nexa-400/60 text-[12px] font-mono font-semibold text-white">ctrl</kbd>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">|</kbd>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">/</kbd>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">~</kbd>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">-</kbd>
+              <div class="w-px bg-white/10 my-1"></div>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">↑</kbd>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">↓</kbd>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">←</kbd>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">→</kbd>
+              <div class="w-px bg-white/10 my-1"></div>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">⌃C</kbd>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">⌃D</kbd>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">⌃L</kbd>
+              <kbd class="px-2.5 py-1.5 rounded-lg bg-white/8 border border-white/10 text-[12px] font-mono text-white/90">⌃Z</kbd>
+            </div>
+          </div>
+
+          <!-- Chat input -->
+          <div class="mt-2 flex items-end gap-2">
+            <div class="flex-1 glass rounded-2xl px-3 py-2.5 flex items-center gap-2">
+              <input type="text" placeholder="Nachricht an Claude…" class="flex-1 bg-transparent outline-none text-[14px] text-white placeholder-white/40" />
+              <div class="text-[10px] font-mono text-white/30">⌘↵</div>
+            </div>
+            <button class="w-10 h-10 rounded-full bg-nexa-500 hover:bg-nexa-600 flex items-center justify-center active:scale-95 transition shadow-lg shadow-nexa-500/30">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="text-white"><path d="M2 12l20-9-9 20-2-9-9-2z"/></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= HOSTS TAB ================= -->
+      <section data-tab="hosts" class="absolute inset-0 flex flex-col hidden">
+        <div class="pt-[54px] px-5 pb-3 flex items-center justify-between">
+          <h2 class="text-[28px] font-bold tracking-tight">Hosts</h2>
+          <button class="w-9 h-9 rounded-full flex items-center justify-center glass text-nexa-400 active:scale-95 transition">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+
+        <div class="px-3 space-y-2 overflow-y-auto nsb flex-1 pb-32">
+
+          <!-- Host card -->
+          <div class="glass rounded-2xl p-4 flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-nexa-500/40 to-nexa-700/40 border border-nexa-400/30 flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-nexa-300"><rect x="3" y="3" width="18" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/><circle cx="7" cy="7" r="1"/><circle cx="7" cy="17" r="1"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[15px] font-semibold truncate">nexa-prod</span>
+                <span class="text-[9px] font-mono font-semibold tracking-wider text-blue-300 bg-blue-400/15 border border-blue-400/30 px-1.5 py-0.5 rounded-full">TAIL</span>
+                <span class="text-[9px] font-mono font-semibold tracking-wider text-nexa-300 bg-nexa-400/15 border border-nexa-400/30 px-1.5 py-0.5 rounded-full">CC</span>
+              </div>
+              <div class="text-[11.5px] font-mono text-white/50 mt-0.5 truncate">deploy@100.64.1.12:22</div>
+              <div class="text-[10.5px] text-white/35 mt-0.5">Letztes Login · vor 12 Min</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/30"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+
+          <div class="glass rounded-2xl p-4 flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500/30 to-blue-700/30 border border-cyan-400/30 flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cyan-300"><rect x="3" y="3" width="18" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/><circle cx="7" cy="7" r="1"/><circle cx="7" cy="17" r="1"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[15px] font-semibold truncate">nexa-vps (NOX)</span>
+                <span class="text-[9px] font-mono font-semibold tracking-wider text-blue-300 bg-blue-400/15 border border-blue-400/30 px-1.5 py-0.5 rounded-full">TAIL</span>
+                <span class="text-[9px] font-mono font-semibold tracking-wider text-nexa-300 bg-nexa-400/15 border border-nexa-400/30 px-1.5 py-0.5 rounded-full">CC</span>
+              </div>
+              <div class="text-[11.5px] font-mono text-white/50 mt-0.5 truncate">root@srv1326792.hstgr.cloud:22</div>
+              <div class="text-[10.5px] text-white/35 mt-0.5">Letztes Login · heute 09:14</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/30"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+
+          <div class="glass rounded-2xl p-4 flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-500/30 to-red-700/30 border border-orange-400/30 flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-orange-300"><rect x="3" y="3" width="18" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/><circle cx="7" cy="7" r="1"/><circle cx="7" cy="17" r="1"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[15px] font-semibold truncate">homelab</span>
+                <span class="text-[9px] font-mono font-semibold tracking-wider text-blue-300 bg-blue-400/15 border border-blue-400/30 px-1.5 py-0.5 rounded-full">TAIL</span>
+              </div>
+              <div class="text-[11.5px] font-mono text-white/50 mt-0.5 truncate">domin@100.96.3.92:22</div>
+              <div class="text-[10.5px] text-white/35 mt-0.5">Letztes Login · gestern</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/30"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+
+          <!-- Empty-state hint chip -->
+          <div class="text-center text-[11px] text-white/30 pt-4">
+            Swipe links zum Löschen · Tap zum Bearbeiten
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= THEMES TAB ================= -->
+      <section data-tab="themes" class="absolute inset-0 flex flex-col hidden">
+        <div class="pt-[54px] px-5 pb-3">
+          <h2 class="text-[28px] font-bold tracking-tight">Themes</h2>
+          <p class="text-[13px] text-white/50 mt-0.5">Terminal-Palette wählen.</p>
+        </div>
+
+        <div class="px-3 space-y-3 overflow-y-auto nsb flex-1 pb-32">
+
+          <!-- Tokyo Night -->
+          <div class="glass-strong rounded-2xl overflow-hidden border-2 border-nexa-400/50">
+            <div class="tn-bg p-4">
+              <div class="font-mono text-[11.5px] leading-relaxed">
+                <div><span style="color:#bb9af7">function</span> <span style="color:#7da1ff">deploy</span><span style="color:#c7cfee">() {</span></div>
+                <div class="pl-3"><span style="color:#565f89">// push to prod</span></div>
+                <div class="pl-3"><span style="color:#7bd2e4">const</span> <span style="color:#c7cfee">url = </span><span style="color:#9ece6a">'nexa.prod'</span><span style="color:#c7cfee">;</span></div>
+                <div class="pl-3"><span style="color:#f7768e">return</span> <span style="color:#e0af68">await</span> <span style="color:#7da1ff">fetch</span><span style="color:#c7cfee">(url);</span></div>
+                <div><span style="color:#c7cfee">}</span></div>
+              </div>
+            </div>
+            <div class="p-4 flex items-center justify-between">
+              <div>
+                <div class="text-[15px] font-semibold">Tokyo Night</div>
+                <div class="text-[11px] text-white/45 mt-0.5">Aktiv · Default</div>
+              </div>
+              <div class="flex gap-1">
+                <span class="w-4 h-4 rounded-full" style="background:#191b29;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.15)"></span>
+                <span class="w-4 h-4 rounded-full" style="background:#f7768e"></span>
+                <span class="w-4 h-4 rounded-full" style="background:#9ece6a"></span>
+                <span class="w-4 h-4 rounded-full" style="background:#e0af68"></span>
+                <span class="w-4 h-4 rounded-full" style="background:#7da1ff"></span>
+                <span class="w-4 h-4 rounded-full" style="background:#bb9af7"></span>
+                <span class="w-4 h-4 rounded-full" style="background:#7bd2e4"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Solarized Dark -->
+          <div class="glass rounded-2xl overflow-hidden">
+            <div class="sol-bg p-4">
+              <div class="font-mono text-[11.5px] leading-relaxed">
+                <div><span style="color:#d33682">function</span> <span style="color:#268bd2">deploy</span><span style="color:#839496">() {</span></div>
+                <div class="pl-3"><span style="color:#586e75">// push to prod</span></div>
+                <div class="pl-3"><span style="color:#2aa198">const</span> <span style="color:#839496">url = </span><span style="color:#859900">'nexa.prod'</span><span style="color:#839496">;</span></div>
+                <div class="pl-3"><span style="color:#dc322f">return</span> <span style="color:#b58900">await</span> <span style="color:#268bd2">fetch</span><span style="color:#839496">(url);</span></div>
+                <div><span style="color:#839496">}</span></div>
+              </div>
+            </div>
+            <div class="p-4 flex items-center justify-between">
+              <div>
+                <div class="text-[15px] font-semibold">Solarized Dark</div>
+                <div class="text-[11px] text-white/45 mt-0.5">Auswählen</div>
+              </div>
+              <div class="flex gap-1">
+                <span class="w-4 h-4 rounded-full" style="background:#002b36;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.15)"></span>
+                <span class="w-4 h-4 rounded-full" style="background:#dc322f"></span>
+                <span class="w-4 h-4 rounded-full" style="background:#859900"></span>
+                <span class="w-4 h-4 rounded-full" style="background:#b58900"></span>
+                <span class="w-4 h-4 rounded-full" style="background:#268bd2"></span>
+                <span class="w-4 h-4 rounded-full" style="background:#d33682"></span>
+                <span class="w-4 h-4 rounded-full" style="background:#2aa198"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coming soon -->
+          <div class="glass rounded-2xl p-4 flex items-center gap-3 opacity-60">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center border border-white/10" style="background:#1e1e2e">
+              <div class="flex gap-0.5">
+                <span class="w-1.5 h-1.5 rounded-full" style="background:#f38ba8"></span>
+                <span class="w-1.5 h-1.5 rounded-full" style="background:#a6e3a1"></span>
+                <span class="w-1.5 h-1.5 rounded-full" style="background:#89b4fa"></span>
+              </div>
+            </div>
+            <div class="flex-1">
+              <div class="text-[14px] font-semibold">Catppuccin Mocha</div>
+              <div class="text-[11px] text-white/40">Coming soon · v1.1</div>
+            </div>
+          </div>
+
+          <div class="glass rounded-2xl p-4 flex items-center gap-3 opacity-60">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center border border-white/10" style="background:#282c34">
+              <div class="flex gap-0.5">
+                <span class="w-1.5 h-1.5 rounded-full" style="background:#e06c75"></span>
+                <span class="w-1.5 h-1.5 rounded-full" style="background:#98c379"></span>
+                <span class="w-1.5 h-1.5 rounded-full" style="background:#61afef"></span>
+              </div>
+            </div>
+            <div class="flex-1">
+              <div class="text-[14px] font-semibold">One Dark Pro</div>
+              <div class="text-[11px] text-white/40">Coming soon</div>
+            </div>
+          </div>
+
+          <div class="text-center text-[11px] text-white/30 pt-2">
+            JSON-Themes in v1.1 · Bring-your-own Palette
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SETTINGS TAB ================= -->
+      <section data-tab="settings" class="absolute inset-0 flex flex-col hidden">
+        <div class="pt-[54px] px-5 pb-3">
+          <h2 class="text-[28px] font-bold tracking-tight">Einstellungen</h2>
+        </div>
+
+        <div class="px-3 space-y-3 overflow-y-auto nsb flex-1 pb-32">
+
+          <!-- Section: Hardware Keyboard -->
+          <div>
+            <div class="text-[11px] uppercase tracking-wider text-white/40 px-2 mb-1.5 font-semibold">Hardware Keyboard</div>
+            <div class="glass rounded-2xl divide-y divide-white/5">
+              <div class="p-3.5 flex items-center justify-between">
+                <div>
+                  <div class="text-[14px]">CapsLock → Esc</div>
+                  <div class="text-[11px] text-white/40 mt-0.5">Physisches Mapping für Vim-Workflow</div>
+                </div>
+                <div class="w-[44px] h-[26px] rounded-full bg-nexa-500 relative cursor-pointer">
+                  <div class="absolute right-0.5 top-0.5 w-[22px] h-[22px] rounded-full bg-white shadow-md"></div>
+                </div>
+              </div>
+              <div class="p-3.5 flex items-center justify-between">
+                <div>
+                  <div class="text-[14px]">Meta als Ctrl senden</div>
+                  <div class="text-[11px] text-white/40 mt-0.5">⌘ wird zu Ctrl im Terminal</div>
+                </div>
+                <div class="w-[44px] h-[26px] rounded-full bg-nexa-500 relative cursor-pointer">
+                  <div class="absolute right-0.5 top-0.5 w-[22px] h-[22px] rounded-full bg-white shadow-md"></div>
+                </div>
+              </div>
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="text-[14px]">tmux-Prefix</div>
+                <div class="flex items-center gap-1.5 text-white/60">
+                  <span class="text-[13px] font-mono">⌃B</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/30"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+              </div>
+              <div class="p-3.5 flex items-center justify-between">
+                <div>
+                  <div class="text-[14px]">Haptik</div>
+                  <div class="text-[11px] text-white/40 mt-0.5">Vibration bei Tastendruck</div>
+                </div>
+                <div class="w-[44px] h-[26px] rounded-full bg-nexa-500 relative cursor-pointer">
+                  <div class="absolute right-0.5 top-0.5 w-[22px] h-[22px] rounded-full bg-white shadow-md"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Claude -->
+          <div>
+            <div class="text-[11px] uppercase tracking-wider text-white/40 px-2 mb-1.5 font-semibold">Claude</div>
+            <div class="glass rounded-2xl divide-y divide-white/5">
+              <div class="p-3.5 flex items-center justify-between">
+                <div>
+                  <div class="text-[14px]">Stream-JSON Overlay</div>
+                  <div class="text-[11px] text-white/40 mt-0.5">Todos, Tool-Calls, Usage als native Widgets</div>
+                </div>
+                <div class="w-[44px] h-[26px] rounded-full bg-nexa-500 relative cursor-pointer">
+                  <div class="absolute right-0.5 top-0.5 w-[22px] h-[22px] rounded-full bg-white shadow-md"></div>
+                </div>
+              </div>
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="text-[14px]">Default CLI</div>
+                <div class="flex items-center gap-1.5 text-white/60">
+                  <span class="text-[13px]">claude</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/30"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Schrift -->
+          <div>
+            <div class="text-[11px] uppercase tracking-wider text-white/40 px-2 mb-1.5 font-semibold">Schrift</div>
+            <div class="glass rounded-2xl divide-y divide-white/5">
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="text-[14px]">Familie</div>
+                <div class="flex items-center gap-1.5 text-white/60">
+                  <span class="text-[13px] font-mono">JetBrains Mono</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white/30"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+              </div>
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="text-[14px]">Größe</div>
+                <div class="flex items-center gap-2">
+                  <button class="w-7 h-7 rounded-full glass flex items-center justify-center text-white/80">−</button>
+                  <span class="text-[13px] font-mono w-8 text-center">14 pt</span>
+                  <button class="w-7 h-7 rounded-full glass flex items-center justify-center text-white/80">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: About -->
+          <div>
+            <div class="text-[11px] uppercase tracking-wider text-white/40 px-2 mb-1.5 font-semibold">Über</div>
+            <div class="glass rounded-2xl divide-y divide-white/5">
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="text-[14px]">Version</div>
+                <span class="text-[12px] font-mono text-white/50">0.1.0 (14)</span>
+              </div>
+              <div class="p-3.5 flex items-center justify-between">
+                <div class="text-[14px]">Build</div>
+                <span class="text-[12px] font-mono text-white/50">2026-04-18</span>
+              </div>
+              <div class="p-3.5 flex items-center justify-between">
+                <div>
+                  <div class="text-[14px]">Concept Doc</div>
+                  <div class="text-[11px] text-white/40 mt-0.5">github.com/schenkei/mobile-terminal</div>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-nexa-400"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-center text-[10px] text-white/25 pt-1 pb-4 font-mono">
+            SwiftTerm · Citadel SSH · iOS 26+
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= BOTTOM TAB BAR ================= -->
+      <div class="absolute left-3 right-3 bottom-3 z-50">
+        <div class="glass-tabbar rounded-[28px] p-1.5 flex items-center justify-between">
+          <button data-target="sessions" class="tab-btn flex-1 flex flex-col items-center gap-0.5 py-2 rounded-[22px] transition active:scale-95">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tab-icon"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            <span class="text-[10px] font-medium tab-label">Sessions</span>
+          </button>
+          <button data-target="hosts" class="tab-btn flex-1 flex flex-col items-center gap-0.5 py-2 rounded-[22px] transition active:scale-95">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tab-icon"><rect x="3" y="3" width="18" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/><line x1="7" y1="7" x2="7.01" y2="7"/><line x1="7" y1="17" x2="7.01" y2="17"/></svg>
+            <span class="text-[10px] font-medium tab-label">Hosts</span>
+          </button>
+          <button data-target="themes" class="tab-btn flex-1 flex flex-col items-center gap-0.5 py-2 rounded-[22px] transition active:scale-95">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tab-icon"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="10" cy="20" r="2.5"/><path d="M12 2a10 10 0 1 0 0 20 3 3 0 0 0 0-6 2 2 0 0 1 0-4 3 3 0 0 0 0-6z" fill="none"/></svg>
+            <span class="text-[10px] font-medium tab-label">Themes</span>
+          </button>
+          <button data-target="settings" class="tab-btn flex-1 flex flex-col items-center gap-0.5 py-2 rounded-[22px] transition active:scale-95">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tab-icon"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span class="text-[10px] font-medium tab-label">Mehr</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Helper footer -->
+  <div class="helper mt-6 text-center text-[12px] text-white/35">
+    Nativ gebaut als SwiftUI App für iOS 26+ · SwiftTerm + Citadel SSH
+  </div>
+
+<script>
+  // Tab switching
+  const sections = document.querySelectorAll('section[data-tab]');
+  const buttons  = document.querySelectorAll('.tab-btn');
+
+  function setActive(target) {
+    sections.forEach(s => {
+      const on = s.dataset.tab === target;
+      s.classList.toggle('hidden', !on);
+      if (on) {
+        s.classList.remove('tab-enter');
+        void s.offsetWidth; // restart animation
+        s.classList.add('tab-enter');
+      }
+    });
+    buttons.forEach(b => {
+      const on = b.dataset.target === target;
+      b.classList.toggle('bg-white/10', on);
+      b.querySelector('.tab-icon').style.color   = on ? '#a78bfa' : 'rgba(255,255,255,0.55)';
+      b.querySelector('.tab-label').style.color  = on ? '#a78bfa' : 'rgba(255,255,255,0.55)';
+    });
+  }
+
+  buttons.forEach(b => b.addEventListener('click', () => setActive(b.dataset.target)));
+  setActive('sessions');
+</script>
+</body>
+</html>
